@@ -50,7 +50,11 @@ enum GOADK
  */
 struct SPRIZE : public SO
 {
-    // ...
+    /* 0x550 */ STRUCT_PADDING(1);
+    /* 0x554 */ int fCollectible;
+    /* 0x558 */ STRUCT_PADDING(1);
+    /* 0x55c */ int coidAseg;
+    /* 0x560 */ OID aoidAseg[16];
 };
 
 /**
@@ -59,6 +63,7 @@ struct SPRIZE : public SO
  */
 struct SCPRIZE : public SPRIZE
 {
+    /* 0x5a0 */ int ichk;
     // ...
 };
 
@@ -68,6 +73,7 @@ struct SCPRIZE : public SPRIZE
  */
 struct CLUE : public SPRIZE
 {
+    /* 0x5a0 */ int iclue;
     // ...
 };
 
@@ -110,6 +116,11 @@ struct TMBL
     SMA *psmaDial;
 };
 
+/**
+ * @brief Initializes a prize. It starts out collectible.
+ *
+ * @param psprize The prize.
+ */
 void InitSprize(SPRIZE *psprize);
 
 void LoadSprizeFromBrx(SPRIZE *psprize, CBinaryInputStream *pbis);
@@ -124,20 +135,48 @@ void CollectSprize(SPRIZE *psprize);
 
 void EmitSprizeExplosion(SPRIZE *psprize);
 
+/**
+ * @brief Gets the collection state of a prize.
+ *
+ * @param psprize The prize.
+ * @return PCS_Collected if the prize is not in the world, otherwise PCS_Collectible or PCS_NotCollectible.
+ */
 PCS PcsFromSprize(SPRIZE *psprize);
 
+/**
+ * @brief Adds an animation segment to a prize.
+ *
+ * @param psprize The prize.
+ * @param oidAseg The ID of the animation segment.
+ */
 void AddSprizeAseg(SPRIZE *psprize, OID oidAseg);
 
 void HandleSprizeMessage(SPRIZE *psprize, MSGID msgid, void *pv);
 
 int FIgnoreSprizeIntersection(SPRIZE *psprize, SO *psoOther);
 
+/**
+ * @brief Initializes a prize that is tracked by the checkpoint manager and allocates its checkpoint index.
+ *
+ * @param pscprize The prize.
+ */
 void InitScprize(SCPRIZE *pscprize);
 
+/**
+ * @brief Clones a checkpoint-tracked prize, keeping the clone's own checkpoint index.
+ *
+ * @param pscprize The clone.
+ * @param pscprizeBase The prize to copy from.
+ */
 void CloneScprize(SCPRIZE *pscprize, SCPRIZE *pscprizeBase);
 
 PCS PcsFromScprize(SCPRIZE *pscprize);
 
+/**
+ * @brief Collects a checkpoint-tracked prize and records its checkpoint index.
+ *
+ * @param pscprize The prize.
+ */
 void CollectScprize(SCPRIZE *pscprize);
 
 /**
@@ -149,9 +188,9 @@ void CollectScprize(SCPRIZE *pscprize);
 void LoadLockFromBrx(LOCK *plock, CBinaryInputStream *pbis);
 
 /**
- * @brief Sets up a LOCK object after loading.
+ * @brief Finishes loading a lock.
  *
- * @param plock Pointer to the LOCK object.
+ * @param plock The lock.
  */
 void PostLockLoad(LOCK *plock);
 
@@ -188,10 +227,21 @@ void AddLockgLock(LOCKG *plockg, OID oidLock);
 
 void TriggerLockg(LOCKG *plockg);
 
+/**
+ * @brief Initializes a clue bottle and gives it the next clue number from its world.
+ *
+ * @param pclue The clue bottle.
+ */
 void InitClue(CLUE *pclue);
 
 void LoadClueFromBrx(CLUE *pclue, CBinaryInputStream *pbis);
 
+/**
+ * @brief Clones a clue bottle, keeping the clone's own clue number.
+ *
+ * @param pclue The clone.
+ * @param pclueBase The clue bottle to copy from.
+ */
 void CloneClue(CLUE *pclue, CLUE *pclueBase);
 
 void PostClueLoad(CLUE *pclue);
@@ -204,6 +254,12 @@ void BreakClue(CLUE *pclue);
 
 void CollectClueSilent(CLUE *pclue);
 
+/**
+ * @brief Handles an impact on a clue bottle by forwarding to ImpactSo.
+ *
+ * @param pclue The clue bottle.
+ * @param fParentDirty Passed through to ImpactSo.
+ */
 void ImpactClue(CLUE *pclue, int fParentDirty);
 
 int FAbsorbClueWkr(CLUE *pclue, WKR *pwkr);
@@ -214,6 +270,11 @@ void CollectAllClues(int nParam);
 
 void SetGrfvault(int grfvault);
 
+/**
+ * @brief Initializes a vault.
+ *
+ * @param pvault The vault.
+ */
 void InitVault(VAULT *pvault);
 
 void PostTmblLoad(TMBL *ptmbl, OID oidInitialState);
