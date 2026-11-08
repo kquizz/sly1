@@ -96,7 +96,9 @@ enum THROBK
 struct THROB
 {
     /* 0x00 */ THROBK throbk;
-    /* 0x04 */ STRUCT_PADDING(11);
+    /* 0x04 */ STRUCT_PADDING(3);
+    /* 0x10 */ VECTOR vecHsvIn;
+    /* 0x20 */ VECTOR vecHsvOut;
     /* 0x30 */ float dtInOut;
 };
 
@@ -346,10 +348,26 @@ void RotateAloToMat(ALO *palo, MATRIX3 *pmat);
 
 void SetAloVelocityVec(ALO *palo, VECTOR *pv);
 
+/**
+ * @brief Sets the velocity of an object from components, through its vtable.
+ *
+ * @param palo The object.
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ */
 void SetAloVelocityXYZ(ALO *palo, float x, float y, float z);
 
 void SetAloAngularVelocityVec(ALO *palo, VECTOR *pw);
 
+/**
+ * @brief Sets the angular velocity of an object from components, through its vtable.
+ *
+ * @param palo The object.
+ * @param x X component.
+ * @param y Y component.
+ * @param z Z component.
+ */
 void SetAloAngularVelocityXYZ(ALO *palo, float x, float y, float z);
 
 void SetAloVelocityLocal(ALO *palo, VECTOR *pvec);
@@ -514,30 +532,72 @@ void SetAloNoFreeze(ALO *palo, int fNoFreeze);
 
 void SetAloRestorePositionAck(ALO *palo, ACK ack);
 
+/**
+ * @brief Sets whether an object restores its rotation, using a spring ack or no ack.
+ *
+ * @param palo The object.
+ * @param fRestore Nonzero to restore the rotation.
+ */
 void SetAloRestoreRotation(ALO *palo, int fRestore);
 
 void SetAloRestoreRotationAck(ALO *palo, ACK ack);
 
 void SetAloLookAt(ALO *palo, ACK ack);
 
+/**
+ * @brief Sets the look-at ignore distance of an object, creating its look-at action if needed.
+ *
+ * @param palo The object.
+ * @param sIgnore The ignore distance.
+ */
 void SetAloLookAtIgnore(ALO *palo, float sIgnore);
 
 void GetAloLookAtIgnore(ALO *palo, float *psIgnore);
 
+/**
+ * @brief Sets the look-at pan function of an object, creating its look-at action if needed.
+ *
+ * @param palo The object.
+ * @param pclq The function.
+ */
 void SetAloLookAtPanFunction(ALO *palo, CLQ *pclq);
 
 void GetAloLookAtPanFunction(ALO *palo, CLQ *pclq);
 
 void SetAloLookAtPanLimits(ALO *palo, LM *plm);
 
+/**
+ * @brief Gets the look-at pan limits of an object, or 0 to 1 if it has no look-at action.
+ *
+ * @param palo The object.
+ * @param plm Receives the limits.
+ */
 void GetAloLookAtPanLimits(ALO *palo, LM *plm);
 
+/**
+ * @brief Sets the look-at tilt function of an object, creating its look-at action if needed.
+ *
+ * @param palo The object.
+ * @param pclq The function.
+ */
 void SetAloLookAtTiltFunction(ALO *palo, CLQ *pclq);
 
+/**
+ * @brief Gets the look-at tilt function of an object, or zero if it has none.
+ *
+ * @param palo The object.
+ * @param pclq Receives the function.
+ */
 void GetAloLookAtTiltFunction(ALO *palo, CLQ *pclq);
 
 void SetAloLookAtTiltLimits(ALO *palo, LM *plm);
 
+/**
+ * @brief Gets the look-at tilt limits of an object, or 0 to 1 if it has no look-at action.
+ *
+ * @param palo The object.
+ * @param plm Receives the limits.
+ */
 void GetAloLookAtTiltLimits(ALO *palo, LM *plm);
 
 void SetAloLookAtEnabledPriority(ALO *palo, int nPriority);
@@ -552,6 +612,12 @@ void SetAloRotationMatchesVelocity(ALO *palo, float uBank, float dtPredict, ACK 
 
 TARGET *PtargetEnsureAlo(ALO *palo);
 
+/**
+ * @brief Sets the target attack flags of an object, creating its target if needed. -1 leaves them unchanged.
+ *
+ * @param palo The object.
+ * @param grftak The attack flags.
+ */
 void SetAloTargetAttacks(ALO *palo, GRFTAK grftak);
 
 void SetAloTargetRadius(ALO *palo, float sRadiusTarget);
@@ -596,6 +662,12 @@ void SetAloUPitchSpl(ALO *palo, float uPitch);
 
 void GetAloUPitch(ALO *palo, float *puPitch);
 
+/**
+ * @brief Gets the repeat limits of an object's sound effect, or -1 to -1 if it has none.
+ *
+ * @param palo The object.
+ * @param plmRepeat Receives the limits.
+ */
 void GetAloSndRepeat(ALO *palo, LM *plmRepeat);
 
 void StartAloSound(ALO *palo, SFXID sfxid, float sStart, float sFull, float uVol, LM *plmRepeat);
@@ -608,12 +680,36 @@ void SetAloThrobKind(ALO *palo, THROBK throbk);
 
 void GetAloThrobKind(ALO *palo, THROBK *pthrobk);
 
+/**
+ * @brief Sets the throb in color of an object (HSV), creating its throb if needed.
+ *
+ * @param palo The object.
+ * @param phsvInColor The color.
+ */
 void SetAloThrobInColor(ALO *palo, VECTOR *phsvInColor);
 
+/**
+ * @brief Gets the throb in color of an object (HSV), or zero if it has no throb.
+ *
+ * @param palo The object.
+ * @param phsvInColor Receives the color.
+ */
 void GetAloThrobInColor(ALO *palo, VECTOR *phsvInColor);
 
+/**
+ * @brief Sets the throb out color of an object (HSV), creating its throb if needed.
+ *
+ * @param palo The object.
+ * @param phsvOutColor The color.
+ */
 void SetAloThrobOutColor(ALO *palo, VECTOR *phsvOutColor);
 
+/**
+ * @brief Gets the throb out color of an object (HSV), or zero if it has no throb.
+ *
+ * @param palo The object.
+ * @param phsvOutColor Receives the color.
+ */
 void GetAloThrobOutColor(ALO *palo, VECTOR *phsvOutColor);
 
 void SetAloThrobDtInOut(ALO *palo, float dtInOut);

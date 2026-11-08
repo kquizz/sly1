@@ -8,12 +8,14 @@
 #include <target.h>
 #include <lookat.h>
 #include <util.h>
+#include <sound.h>
 
 extern VTACT g_vtact;
 extern VTACT g_vtactadj; // TODO: ACTADJ has it's own vtable.
 extern VTACT g_vtactseg; // TODO: ACTSEG has it's own vtable.
 extern VTACT g_vtactla;  // TODO: ACTLA has it's own vtable.
 extern SHADOW s_shadow;
+extern VECTOR D_00248D30; // Zero vector, default throb color
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", FIsZeroV__FP6VECTOR);
 
@@ -111,11 +113,25 @@ INCLUDE_ASM("asm/nonmatchings/P2/alo", RotateAloToMat__FP3ALOP7MATRIX3);
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloVelocityVec__FP3ALOP6VECTOR);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloVelocityXYZ__FP3ALOfff);
+void SetAloVelocityXYZ(ALO *palo, float x, float y, float z)
+{
+    VECTOR vec;
+    vec.x = x;
+    vec.y = y;
+    vec.z = z;
+    palo->pvtalo->pfnSetAloVelocityVec(palo, &vec);
+}
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloAngularVelocityVec__FP3ALOP6VECTOR);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloAngularVelocityXYZ__FP3ALOfff);
+void SetAloAngularVelocityXYZ(ALO *palo, float x, float y, float z)
+{
+    VECTOR vec;
+    vec.x = x;
+    vec.y = y;
+    vec.z = z;
+    palo->pvtalo->pfnSetAloAngularVelocityVec(palo, &vec);
+}
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloVelocityLocal__FP3ALOP6VECTOR);
 
@@ -422,7 +438,10 @@ INCLUDE_ASM("asm/nonmatchings/P2/alo", FUN_0012a418);
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloRestorePositionAck__FP3ALO3ACK);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloRestoreRotation__FP3ALOi);
+void SetAloRestoreRotation(ALO *palo, int fRestore)
+{
+    SetAloRestoreRotationAck(palo, fRestore ? ACK_Spring : ACK_Nil);
+}
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloRestoreRotationAck__FP3ALO3ACK);
 
@@ -430,14 +449,22 @@ INCLUDE_ASM("asm/nonmatchings/P2/alo", FUN_0012a4e8);
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloLookAt__FP3ALO3ACK);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloLookAtIgnore__FP3ALOf);
+void SetAloLookAtIgnore(ALO *palo, float sIgnore)
+{
+    EnsureAloActla(palo);
+    palo->pactla->sIgnore = sIgnore;
+}
 
 void GetAloLookAtIgnore(ALO *palo, float *psIgnore)
 {
     *psIgnore = palo->pactla ? STRUCT_OFFSET(palo->pactla, 0x40, float) : 0.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloLookAtPanFunction__FP3ALOP3CLQ);
+void SetAloLookAtPanFunction(ALO *palo, CLQ *pclq)
+{
+    EnsureAloActla(palo);
+    STRUCT_OFFSET(&palo->pactla->clqPanToPan, 0, qword) = STRUCT_OFFSET(pclq, 0, qword);
+}
 
 void GetAloLookAtPanFunction(ALO *palo, CLQ *pclq)
 {
@@ -457,15 +484,29 @@ void GetAloLookAtPanFunction(ALO *palo, CLQ *pclq)
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloLookAtPanLimits__FP3ALOP2LM);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", GetAloLookAtPanLimits__FP3ALOP2LM);
+void GetAloLookAtPanLimits(ALO *palo, LM *plm)
+{
+    *plm = (palo->pactla != 0) ? palo->pactla->lmPan : g_lmZeroOne;
+}
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloLookAtTiltFunction__FP3ALOP3CLQ);
+void SetAloLookAtTiltFunction(ALO *palo, CLQ *pclq)
+{
+    EnsureAloActla(palo);
+    STRUCT_OFFSET(&palo->pactla->clqTiltToTilt, 0, qword) = STRUCT_OFFSET(pclq, 0, qword);
+}
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", GetAloLookAtTiltFunction__FP3ALOP3CLQ);
+void GetAloLookAtTiltFunction(ALO *palo, CLQ *pclq)
+{
+    CLQ *pclqSrc = (palo->pactla != 0) ? &palo->pactla->clqTiltToTilt : &g_clqZero;
+    STRUCT_OFFSET(pclq, 0, qword) = STRUCT_OFFSET(pclqSrc, 0, qword);
+}
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloLookAtTiltLimits__FP3ALOP2LM);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", GetAloLookAtTiltLimits__FP3ALOP2LM);
+void GetAloLookAtTiltLimits(ALO *palo, LM *plm)
+{
+    *plm = (palo->pactla != 0) ? palo->pactla->lmTilt : g_lmZeroOne;
+}
 
 void SetAloLookAtEnabledPriority(ALO *palo, int nPriority)
 {
@@ -510,7 +551,14 @@ INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloRotationMatchesVelocity__FP3ALOff3A
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", PtargetEnsureAlo__FP3ALO);
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloTargetAttacks__FP3ALOi);
+void SetAloTargetAttacks(ALO *palo, int grftak)
+{
+    TARGET *ptarget = PtargetEnsureAlo(palo);
+    if (grftak != -1)
+    {
+        ptarget->grftak = grftak;
+    }
+}
 
 void SetAloTargetRadius(ALO *palo, float sRadiusTarget)
 {
@@ -622,7 +670,16 @@ void GetAloUPitch(ALO *palo, float *puPitch)
     *puPitch = palo->psfx ? palo->psfx->uPitch : 0.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", GetAloSndRepeat__FP3ALOP2LM);
+void GetAloSndRepeat(ALO *palo, LM *plmRepeat)
+{
+    if (palo->psfx != 0)
+    {
+        *plmRepeat = palo->psfx->lmRepeat;
+        return;
+    }
+    plmRepeat->gMin = -1.0f;
+    plmRepeat->gMax = -1.0f;
+}
 
 INCLUDE_ASM("asm/nonmatchings/P2/alo", StartAloSound__FP3ALO5SFXIDfffP2LM);
 
@@ -643,13 +700,29 @@ void GetAloThrobKind(ALO *palo, THROBK *pthrobk)
     *pthrobk = palo->pthrob ? palo->pthrob->throbk : THROBK_Nil;
 }
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloThrobInColor__FP3ALOP6VECTOR);
+void SetAloThrobInColor(ALO *palo, VECTOR *phsvInColor)
+{
+    EnsureAloThrob(palo);
+    STRUCT_OFFSET(&palo->pthrob->vecHsvIn, 0, qword) = STRUCT_OFFSET(phsvInColor, 0, qword);
+}
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", GetAloThrobInColor__FP3ALOP6VECTOR);
+void GetAloThrobInColor(ALO *palo, VECTOR *phsvInColor)
+{
+    VECTOR *pvecSrc = (palo->pthrob != 0) ? &palo->pthrob->vecHsvIn : &D_00248D30;
+    STRUCT_OFFSET(phsvInColor, 0, qword) = STRUCT_OFFSET(pvecSrc, 0, qword);
+}
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", SetAloThrobOutColor__FP3ALOP6VECTOR);
+void SetAloThrobOutColor(ALO *palo, VECTOR *phsvOutColor)
+{
+    EnsureAloThrob(palo);
+    STRUCT_OFFSET(&palo->pthrob->vecHsvOut, 0, qword) = STRUCT_OFFSET(phsvOutColor, 0, qword);
+}
 
-INCLUDE_ASM("asm/nonmatchings/P2/alo", GetAloThrobOutColor__FP3ALOP6VECTOR);
+void GetAloThrobOutColor(ALO *palo, VECTOR *phsvOutColor)
+{
+    VECTOR *pvecSrc = (palo->pthrob != 0) ? &palo->pthrob->vecHsvOut : &D_00248D30;
+    STRUCT_OFFSET(phsvOutColor, 0, qword) = STRUCT_OFFSET(pvecSrc, 0, qword);
+}
 
 void SetAloThrobDtInOut(ALO *palo, float dtInOut)
 {
